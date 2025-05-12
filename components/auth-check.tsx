@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 interface AuthCheckProps {
   children: React.ReactNode
@@ -13,18 +13,17 @@ interface AuthCheckProps {
 export function AuthCheck({ children }: AuthCheckProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    // Check if user is authenticated
-    const authStatus = localStorage.getItem("isAuthenticated") === "true"
-    setIsAuthenticated(authStatus)
-    setIsLoading(false)
-
-    if (!authStatus) {
-      router.push("/")
+    if (status !== "loading") {
+      setIsLoading(false)
+      
+      if (status === "unauthenticated") {
+        router.push("/")
+      }
     }
-  }, [router])
+  }, [router, status])
 
   if (isLoading) {
     return (
@@ -37,7 +36,7 @@ export function AuthCheck({ children }: AuthCheckProps) {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!session) {
     return null
   }
 
