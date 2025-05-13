@@ -1,11 +1,51 @@
 import NextAuth from "next-auth"
 import GitHub from "next-auth/providers/github"
+import Credentials from "next-auth/providers/credentials"
+import { z } from "zod"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    }),
+    Credentials({
+      id: "credentials",
+      name: "Email and Password",
+      credentials: {
+        email: {
+          label: "Email",
+          type: "email",
+          placeholder: "hello@example.com",
+        },
+        password: {
+          label: "Password",
+          type: "password",
+        },
+      },
+      async authorize(credentials) {
+        const parsedCredentials = z
+          .object({ email: z.string().email(), password: z.string().min(6) })
+          .safeParse(credentials)
+
+        if (parsedCredentials.success) {
+          const { email, password } = parsedCredentials.data
+          
+          // In a real application, you would check these credentials against your database
+          // This is just a simple example for demonstration purposes
+          if (email === "user@example.com" && password === "password123") {
+            return {
+              id: "1",
+              name: "Demo User",
+              email: "user@example.com",
+              image: "https://github.com/shadcn.png",
+            }
+          }
+        }
+        
+        console.log("Invalid credentials")
+        return null
+      },
     }),
   ],
   pages: {
